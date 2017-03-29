@@ -12,13 +12,11 @@ public class OwnCloudClient extends WebDAVClient {
 
     private long _chunkSize = 0;
 
-    public OwnCloudClient(String host, int port, String scheme,
-            String proxyHost, int proxyPort, String username, String password) {
-        super(host, port, scheme, proxyHost, proxyPort, username, password);
+    public OwnCloudClient(String serverUrl, String proxyHost, int proxyPort, String username, String password) {
+        super(serverUrl, proxyHost, proxyPort, username, password);
     }
 
-    public OwnCloudClient(String serverUrl, String proxyAddress,
-            String username, String password) throws Throwable {
+    public OwnCloudClient(String serverUrl, String proxyAddress, String username, String password) throws Throwable {
         super(serverUrl, proxyAddress, username, password);
     }
 
@@ -30,17 +28,13 @@ public class OwnCloudClient extends WebDAVClient {
         _chunkSize = chunkSize;
     }
 
-    public void putChunk(String filePath, InputStream in, long length,
-            int index, int nbChunks) throws Throwable {
-        String chunkPath = filePath + "-chunking-"
-                + Math.abs((new Random()).nextInt(9000) + 1000) + "-" + nbChunks
+    public void putChunk(String filePath, InputStream in, long length, int index, int nbChunks) throws Throwable {
+        String chunkPath = filePath + "-chunking-" + Math.abs((new Random()).nextInt(9000) + 1000) + "-" + nbChunks
                 + "-" + index;
-        super.put(chunkPath, in, length, null, CollectionUtils
-                .createMap(OC_CHUNKED_HEADER, OC_CHUNKED_HEADER));
+        super.put(chunkPath, in, length, null, CollectionUtils.createMap(OC_CHUNKED_HEADER, OC_CHUNKED_HEADER));
     }
 
-    public void put(String path, InputStream in, long length, String mimeType)
-            throws Throwable {
+    public void put(String path, InputStream in, long length, String mimeType) throws Throwable {
         if (_chunkSize <= 0 || length < 0 || length < _chunkSize) {
             // fallback to unchunked put if:
             // ---- _chunkSize<=0: configured unchunked
@@ -52,10 +46,8 @@ public class OwnCloudClient extends WebDAVClient {
             long remaining = length;
             try {
                 for (int chunkIndex = 0; chunkIndex < nbChunks; chunkIndex++, remaining -= _chunkSize) {
-                    long chunkLength = remaining >= _chunkSize ? _chunkSize
-                            : remaining;
-                    putChunk(path, new SizedInputStream(in, chunkLength, false),
-                            chunkLength, chunkIndex, nbChunks);
+                    long chunkLength = remaining >= _chunkSize ? _chunkSize : remaining;
+                    putChunk(path, new SizedInputStream(in, chunkLength, false), chunkLength, chunkIndex, nbChunks);
                 }
             } finally {
                 in.close();

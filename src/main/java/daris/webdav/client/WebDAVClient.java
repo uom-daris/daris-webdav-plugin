@@ -8,7 +8,7 @@ import java.net.URI;
 import java.util.Base64;
 import java.util.Map;
 
-import org.apache.commons.httpclient.Credentials;
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
@@ -24,57 +24,38 @@ import org.apache.jackrabbit.webdav.client.methods.PutMethod;
 
 import daris.io.IOUtils;
 import daris.util.PathUtils;
+import daris.util.URLUtils;
 
 public class WebDAVClient {
 
     private String _serverUrl;
-    private String _username;
-    private String _password;
+    private HostConfiguration _hostConf;
+    private UsernamePasswordCredentials _credentials;
+    private String _authorization;
     private HttpClient _client;
 
-    public WebDAVClient(String host, int port, String scheme, String proxyHost, int proxyPort, String username,
-            String password) {
-
-        _serverUrl = scheme + "://" + host + ":" + port;
-        _username = username;
-        _password = password;
-        HostConfiguration conf = new HostConfiguration();
-        conf.setHost(host, port, scheme);
+    public WebDAVClient(String serverUrl, String proxyHost, int proxyPort, String username, String password) {
+        _serverUrl = serverUrl;
+        URI serverUri = URI.create(serverUrl);
+        _hostConf = new HostConfiguration();
+        _hostConf.setHost(serverUri.getHost(), serverUri.getPort(), serverUri.getScheme());
         if (proxyHost != null) {
-            conf.setProxy(proxyHost, proxyPort);
+            _hostConf.setProxy(proxyHost, proxyPort);
         }
+        _credentials = new UsernamePasswordCredentials(username, password);
+        _authorization = "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes());
         _client = new HttpClient();
-        _client.setHostConfiguration(conf);
-        if (_username != null && _password != null) {
-            Credentials creds = new UsernamePasswordCredentials(_username, _password);
-            _client.getState().setCredentials(AuthScope.ANY, creds);
-        }
+        _client.setHostConfiguration(_hostConf);
+        _client.getState().setCredentials(AuthScope.ANY, _credentials);
     }
 
     public WebDAVClient(String serverUrl, String proxyAddress, String username, String password) throws Throwable {
-
-        _serverUrl = serverUrl;
-        _username = username;
-        _password = password;
-        URI serverUri = URI.create(serverUrl);
-        HostConfiguration conf = new HostConfiguration();
-        conf.setHost(serverUri.getHost(), serverUri.getPort(), serverUri.getScheme());
-        if (proxyAddress != null) {
-            String[] components = proxyAddress.split(":");
-            String proxyHost = components[0];
-            int proxyPort = Integer.parseInt(components[1]);
-            conf.setProxy(proxyHost, proxyPort);
-        }
-        _client = new HttpClient();
-        _client.setHostConfiguration(conf);
-        if (username != null && password != null) {
-            Credentials creds = new UsernamePasswordCredentials(username, password);
-            _client.getState().setCredentials(AuthScope.ANY, creds);
-        }
+        this(serverUrl, proxyAddress == null ? null : proxyAddress.split(":")[0],
+                proxyAddress == null ? 0 : (Integer.parseInt(proxyAddress.split(":")[1])), username, password);
     }
 
     public WebDAVClient(String serverUrl, String username, String password) throws Throwable {
-        this(serverUrl, null, username, password);
+        this(serverUrl, null, 0, username, password);
     }
 
     public void put(String path, InputStream in, long length, String mimeType) throws Throwable {
@@ -85,12 +66,13 @@ public class WebDAVClient {
             throws Throwable {
         String parentPath = PathUtils.getParent(path);
         if (parentPath != null) {
+            System.out.println("##DEBUG## making dir: " + parentPath);
             mkcol(parentPath, true);
         }
-        String url = PathUtils.join(_serverUrl, path);
+        String url = PathUtils.join(_serverUrl, URLUtils.encode(path));
+        System.out.println("##DEBUG## putting file: " + url);
         PutMethod method = new PutMethod(url);
-        method.setRequestHeader("Authorization",
-                "Basic " + Base64.getEncoder().encodeToString((_username + ":" + _password).getBytes()));
+        method.setRequestHeader("Authorization", _authorization);
         if (length >= 0) {
             method.setRequestHeader("Content-Length", Long.toString(length));
         }
@@ -101,6 +83,10 @@ public class WebDAVClient {
             for (String header : requestHeaders.keySet()) {
                 method.setRequestHeader(header, requestHeaders.get(header));
             }
+        }
+        Header[] hs = method.getRequestHeaders();
+        for (Header h : hs) {
+            System.out.println("##DEBUG##: " + h.getName() + ": " + h.getValue());
         }
         RequestEntity requestEntity = new InputStreamRequestEntity(in);
         method.setRequestEntity(requestEntity);
@@ -135,12 +121,16 @@ public class WebDAVClient {
         if (parentPath != null && parents) {
             mkcol(parentPath, true);
         }
-        String url = PathUtils.join(_serverUrl, path);
+        String url = PathUtils.join(_serverUrl, URLUtils.encode(path));
         MkColMethod method = new MkColMethod(url);
-        method.setRequestHeader("Authorization",
-                "Basic " + Base64.getEncoder().encodeToString((_username + ":" + _password).getBytes()));
+        method.setRequestHeader("Authorization", _authorization);
         try {
             int code = _client.executeMethod(method);
+            if (code == HttpStatus.SC_METHOD_NOT_ALLOWED || code == HttpStatus.SC_FORBIDDEN
+                    || code == HttpStatus.SC_CONFLICT) {
+                // ignore the above errors (in multithreaded concurrent env)
+                return;
+            }
             if (!method.succeeded()) {
                 throw new HttpException(
                         "Failed to execute MKCOL method. HTTP response: " + code + " " + method.getStatusText());
@@ -155,10 +145,9 @@ public class WebDAVClient {
     }
 
     public boolean exists(String path) throws Throwable {
-        String url = PathUtils.join(_serverUrl, path);
+        String url = PathUtils.join(_serverUrl, URLUtils.encode(path));
         PropFindMethod method = new PropFindMethod(url, DavConstants.PROPFIND_ALL_PROP, 0);
-        method.setRequestHeader("Authorization",
-                "Basic " + Base64.getEncoder().encodeToString((_username + ":" + _password).getBytes()));
+        method.setRequestHeader("Authorization", _authorization);
         try {
             _client.executeMethod(method);
             return method.getStatusCode() == HttpStatus.SC_MULTI_STATUS;
