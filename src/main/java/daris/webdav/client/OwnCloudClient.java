@@ -12,12 +12,8 @@ public class OwnCloudClient extends WebDAVClient {
 
     private long _chunkSize = 0;
 
-    public OwnCloudClient(String serverUrl, String proxyHost, int proxyPort, String username, String password) {
-        super(serverUrl, proxyHost, proxyPort, username, password);
-    }
-
-    public OwnCloudClient(String serverUrl, String proxyAddress, String username, String password) throws Throwable {
-        super(serverUrl, proxyAddress, username, password);
+    public OwnCloudClient(String serverUrl, String username, String password) {
+        super(serverUrl, username, password);
     }
 
     public long chunkSize() {

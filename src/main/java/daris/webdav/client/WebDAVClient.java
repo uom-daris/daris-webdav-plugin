@@ -5,102 +5,81 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URI;
-import java.util.Base64;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HostConfiguration;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpException;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.UsernamePasswordCredentials;
-import org.apache.commons.httpclient.auth.AuthScope;
-import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
-import org.apache.commons.httpclient.methods.RequestEntity;
-import org.apache.jackrabbit.webdav.DavConstants;
-import org.apache.jackrabbit.webdav.client.methods.MkColMethod;
-import org.apache.jackrabbit.webdav.client.methods.PropFindMethod;
-import org.apache.jackrabbit.webdav.client.methods.PutMethod;
+import org.apache.http.Header;
+import org.apache.http.HttpHeaders;
+import org.apache.http.entity.InputStreamEntity;
+import org.apache.http.message.BasicHeader;
+import org.apache.http.protocol.HTTP;
 
-import daris.io.IOUtils;
+import com.github.sardine.Sardine;
+import com.github.sardine.SardineFactory;
+import com.github.sardine.impl.SardineException;
+import com.github.sardine.impl.SardineImpl;
+
+import daris.io.SizedInputStream;
 import daris.util.PathUtils;
 import daris.util.URLUtils;
 
 public class WebDAVClient {
 
     private String _serverUrl;
-    private HostConfiguration _hostConf;
-    private UsernamePasswordCredentials _credentials;
-    private String _authorization;
-    private HttpClient _client;
+    private String _username;
+    private String _password;
+    private int _retry = 255;
+    private int _retryInterval = 500;
 
-    public WebDAVClient(String serverUrl, String proxyHost, int proxyPort, String username, String password) {
+    public WebDAVClient(String serverUrl, String username, String password) {
         _serverUrl = serverUrl;
-        URI serverUri = URI.create(serverUrl);
-        _hostConf = new HostConfiguration();
-        _hostConf.setHost(serverUri.getHost(), serverUri.getPort(), serverUri.getScheme());
-        if (proxyHost != null) {
-            _hostConf.setProxy(proxyHost, proxyPort);
-        }
-        _credentials = new UsernamePasswordCredentials(username, password);
-        _authorization = "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes());
-        _client = new HttpClient();
-        _client.setHostConfiguration(_hostConf);
-        _client.getState().setCredentials(AuthScope.ANY, _credentials);
-    }
-
-    public WebDAVClient(String serverUrl, String proxyAddress, String username, String password) throws Throwable {
-        this(serverUrl, proxyAddress == null ? null : proxyAddress.split(":")[0],
-                proxyAddress == null ? 0 : (Integer.parseInt(proxyAddress.split(":")[1])), username, password);
-    }
-
-    public WebDAVClient(String serverUrl, String username, String password) throws Throwable {
-        this(serverUrl, null, 0, username, password);
+        _username = username;
+        _password = password;
     }
 
     public void put(String path, InputStream in, long length, String mimeType) throws Throwable {
-        put(path, in, length, mimeType, null);
+        put(path, in, length, mimeType, null, _retry);
     }
 
     protected void put(String path, InputStream in, long length, String mimeType, Map<String, String> requestHeaders)
             throws Throwable {
+        put(path, in, length, mimeType, requestHeaders, _retry);
+    }
+
+    protected void put(String path, InputStream in, long length, String mimeType, Map<String, String> requestHeaders,
+            int retry) throws Throwable {
         String parentPath = PathUtils.getParent(path);
         if (parentPath != null) {
-            System.out.println("##DEBUG## making dir: " + parentPath);
             mkcol(parentPath, true);
         }
-        String url = PathUtils.join(_serverUrl, URLUtils.encode(path));
-        System.out.println("##DEBUG## putting file: " + url);
-        PutMethod method = new PutMethod(url);
-        method.setRequestHeader("Authorization", _authorization);
-        if (length >= 0) {
-            method.setRequestHeader("Content-Length", Long.toString(length));
+        final String url = toUrl(path);
+        List<Header> headers = new ArrayList<Header>();
+        if (requestHeaders != null) {
+            for (Map.Entry<String, String> h : requestHeaders.entrySet()) {
+                headers.add(new BasicHeader(h.getKey(), h.getValue()));
+            }
         }
         if (mimeType != null) {
-            method.setRequestHeader("Content-Type", mimeType);
+            headers.add(new BasicHeader(HttpHeaders.CONTENT_TYPE, mimeType));
         }
-        if (requestHeaders != null) {
-            for (String header : requestHeaders.keySet()) {
-                method.setRequestHeader(header, requestHeaders.get(header));
-            }
-        }
-        Header[] hs = method.getRequestHeaders();
-        for (Header h : hs) {
-            System.out.println("##DEBUG##: " + h.getName() + ": " + h.getValue());
-        }
-        RequestEntity requestEntity = new InputStreamRequestEntity(in);
-        method.setRequestEntity(requestEntity);
+        headers.add(new BasicHeader(HTTP.EXPECT_DIRECTIVE, HTTP.EXPECT_CONTINUE));
+        SardineImpl sardine = new SardineImpl(_username, _password);
+        sardine.enablePreemptiveAuthentication(serverHost());
+        SizedInputStream sin = new SizedInputStream(in, length);
         try {
-            int code = _client.executeMethod(method);
-            if (!method.succeeded()) {
-                throw new HttpException("Failed to execute PUT method. HTTP response: " + code);
-            }
-            if (!(code == HttpStatus.SC_CREATED || code == HttpStatus.SC_NO_CONTENT)) {
-                throw new HttpException("Unexpected HTTP response: " + code);
+            System.out.println(Thread.currentThread().getName() + ": put: " + url);
+            sardine.put(url, new InputStreamEntity(sin, length), headers);
+        } catch (SardineException e) {
+            if (sin.bytesRead() == 0 || retry > 0) {
+                Thread.sleep(_retryInterval);
+                System.out.println(Thread.currentThread().getName() + ": put retry left: " + retry);
+                put(path, in, length, mimeType, requestHeaders, retry - 1);
+            } else {
+                throw e;
             }
         } finally {
-            method.releaseConnection();
-            in.close();
+            sardine.shutdown();
         }
     }
 
@@ -114,6 +93,10 @@ public class WebDAVClient {
     }
 
     public void mkcol(String path, Boolean parents) throws Throwable {
+        mkcol(path, parents, _retry);
+    }
+
+    protected void mkcol(String path, Boolean parents, int retry) throws Throwable {
         if (exists(path)) {
             return;
         }
@@ -121,39 +104,45 @@ public class WebDAVClient {
         if (parentPath != null && parents) {
             mkcol(parentPath, true);
         }
-        String url = PathUtils.join(_serverUrl, URLUtils.encode(path));
-        MkColMethod method = new MkColMethod(url);
-        method.setRequestHeader("Authorization", _authorization);
+        String url = toUrl(path);
+        System.out.println(Thread.currentThread().getName() + ": mkcol: " + url);
+        Sardine sardine = SardineFactory.begin(_username, _password);
         try {
-            int code = _client.executeMethod(method);
-            if (code == HttpStatus.SC_METHOD_NOT_ALLOWED || code == HttpStatus.SC_FORBIDDEN
-                    || code == HttpStatus.SC_CONFLICT) {
-                // ignore the above errors (in multithreaded concurrent env)
-                return;
+            sardine.createDirectory(url);
+        } catch (com.github.sardine.impl.SardineException e) {
+            if (retry > 0) {
+                if (_retryInterval > 0) {
+                    Thread.sleep(_retryInterval);
+                }
+                System.out.println(Thread.currentThread().getName() + ": mkcol retry left: " + retry);
+                mkcol(path, parents, retry - 1);
+            } else {
+                throw e;
             }
-            if (!method.succeeded()) {
-                throw new HttpException(
-                        "Failed to execute MKCOL method. HTTP response: " + code + " " + method.getStatusText());
-            }
-            if (code != HttpStatus.SC_CREATED) {
-                throw new HttpException("Unexpected HTTP response: " + code + " " + method.getStatusText());
-            }
-            IOUtils.exhaustInputStream(method.getResponseBodyAsStream());
         } finally {
-            method.releaseConnection();
+            sardine.shutdown();
         }
     }
 
     public boolean exists(String path) throws Throwable {
-        String url = PathUtils.join(_serverUrl, URLUtils.encode(path));
-        PropFindMethod method = new PropFindMethod(url, DavConstants.PROPFIND_ALL_PROP, 0);
-        method.setRequestHeader("Authorization", _authorization);
+
+        String url = toUrl(path);
+        Sardine sardine = SardineFactory.begin(_username, _password);
         try {
-            _client.executeMethod(method);
-            return method.getStatusCode() == HttpStatus.SC_MULTI_STATUS;
+            // _lock.lock();
+            return sardine.exists(url);
         } finally {
-            method.releaseConnection();
+            // _lock.unlock();
+            sardine.shutdown();
         }
+    }
+
+    private String toUrl(String path) throws Throwable {
+        return PathUtils.join(_serverUrl, URLUtils.encode(path));
+    }
+
+    private String serverHost() {
+        return URI.create(_serverUrl).getHost();
     }
 
     public static void main(String[] args) throws Throwable {

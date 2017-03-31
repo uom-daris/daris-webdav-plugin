@@ -132,7 +132,7 @@ public class WebDAVSink extends AbstractDataSink {
     }
 
     protected WebDAVClient getClient(Map<String, String> params) throws Throwable {
-        return new WebDAVClient(params.get(PARAM_URL), null, params.get(PARAM_USERNAME), params.get(PARAM_PASSWORD));
+        return new WebDAVClient(params.get(PARAM_URL), params.get(PARAM_USERNAME), params.get(PARAM_PASSWORD));
     }
 
     private WebDAVClient getClient(Object multiTransferContext, Map<String, String> params) throws Throwable {
