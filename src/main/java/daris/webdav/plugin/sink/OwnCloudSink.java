@@ -3,8 +3,8 @@ package daris.webdav.plugin.sink;
 import java.util.Map;
 
 import arc.mf.plugin.dtype.LongType;
-import daris.webdav.client.OwnCloudClient;
-import daris.webdav.client.WebDAVClient;
+import daris.webdav.client.sardine.SardineOwnCloudClient;
+import daris.webdav.client.sardine.SardineWebDAVClient;
 
 /**
  * 
@@ -28,8 +28,8 @@ public class OwnCloudSink extends WebDAVSink {
     }
 
     @Override
-    protected WebDAVClient getClient(Map<String, String> params) throws Throwable {
-        OwnCloudClient client = new OwnCloudClient(params.get(PARAM_URL), params.get(PARAM_USERNAME),
+    protected SardineWebDAVClient getClient(Map<String, String> params) throws Throwable {
+        SardineOwnCloudClient client = new SardineOwnCloudClient(params.get(PARAM_URL), params.get(PARAM_USERNAME),
                 params.get(PARAM_PASSWORD));
         if (params.containsKey(PARAM_CHUNK_SIZE)) {
             long chunkSize = 0;

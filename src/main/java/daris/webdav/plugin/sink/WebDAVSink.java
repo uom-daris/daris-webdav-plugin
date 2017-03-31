@@ -14,7 +14,7 @@ import arc.xml.XmlDoc.Element;
 import daris.plugin.sink.AbstractDataSink;
 import daris.plugin.sink.util.OutputPath;
 import daris.util.PathUtils;
-import daris.webdav.client.WebDAVClient;
+import daris.webdav.client.sardine.SardineWebDAVClient;
 
 public class WebDAVSink extends AbstractDataSink {
 
@@ -83,7 +83,7 @@ public class WebDAVSink extends AbstractDataSink {
         if (!ArchiveRegistry.isAnArchive(mimeType) && unarchive) {
             unarchive = false;
         }
-        WebDAVClient client = getClient(multiTransferContext, params);
+        SardineWebDAVClient client = getClient(multiTransferContext, params);
         if (unarchive) {
             String remoteDirPath = OutputPath.getOutputPath(directory, assetSpecificOutputPath, path, assetMeta, true);
             ArchiveInput ai = ArchiveRegistry.createInput(in, new NamedMimeType(mimeType));
@@ -91,7 +91,7 @@ public class WebDAVSink extends AbstractDataSink {
             try {
                 while ((entry = ai.next()) != null) {
                     if (entry.isDirectory()) {
-                        client.mkcol(PathUtils.join(remoteDirPath, entry.name()), true);
+                        client.mkcol(PathUtils.join(remoteDirPath, entry.name()));
                     } else {
                         client.put(PathUtils.join(remoteDirPath, entry.name()), entry.stream(), entry.size(),
                                 entry.mimeType());
@@ -131,13 +131,13 @@ public class WebDAVSink extends AbstractDataSink {
         }
     }
 
-    protected WebDAVClient getClient(Map<String, String> params) throws Throwable {
-        return new WebDAVClient(params.get(PARAM_URL), params.get(PARAM_USERNAME), params.get(PARAM_PASSWORD));
+    protected SardineWebDAVClient getClient(Map<String, String> params) throws Throwable {
+        return new SardineWebDAVClient(params.get(PARAM_URL), params.get(PARAM_USERNAME), params.get(PARAM_PASSWORD));
     }
 
-    private WebDAVClient getClient(Object multiTransferContext, Map<String, String> params) throws Throwable {
+    private SardineWebDAVClient getClient(Object multiTransferContext, Map<String, String> params) throws Throwable {
         if (multiTransferContext != null) {
-            return (WebDAVClient) multiTransferContext;
+            return (SardineWebDAVClient) multiTransferContext;
         } else {
             return getClient(params);
         }
