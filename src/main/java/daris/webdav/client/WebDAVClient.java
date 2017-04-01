@@ -14,6 +14,8 @@ public interface WebDAVClient {
 
     void mkcol(String path) throws Throwable;
 
+    void put(String path, InputStream in, long length, String contentType) throws Throwable;
+
     void put(String path, InputStream in, long length, String contentType, Map<String, String> headers)
             throws Throwable;
 

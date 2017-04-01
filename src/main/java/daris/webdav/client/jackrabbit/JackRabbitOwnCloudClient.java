@@ -1,4 +1,4 @@
-package daris.webdav.client.sardine;
+package daris.webdav.client.jackrabbit;
 
 import java.io.InputStream;
 import java.util.Map;
@@ -8,14 +8,14 @@ import daris.io.SizedInputStream;
 import daris.util.CollectionUtils;
 import daris.webdav.client.OwnCloudClient;
 
-public class SardineOwnCloudClient extends SardineWebDAVClient implements OwnCloudClient {
+public class JackRabbitOwnCloudClient extends JackRabbitWebDAVClient implements OwnCloudClient {
 
     public static final String OC_CHUNKED_HEADER = "OC-Chunked";
 
     private long _chunkSize = 0;
 
-    public SardineOwnCloudClient(String serverUrl, String username, String password) {
-        super(serverUrl, username, password);
+    public JackRabbitOwnCloudClient(String baseUrl, String username, String password) {
+        super(baseUrl, username, password);
     }
 
     public long chunkSize() {
