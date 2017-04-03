@@ -29,7 +29,6 @@ import org.apache.http.message.BasicHeader;
 
 import com.github.sardine.impl.methods.HttpMkCol;
 
-import daris.io.IOUtils;
 import daris.io.SizedInputStream;
 import daris.util.PathUtils;
 import daris.webdav.client.AbstractWebDAVClient;
