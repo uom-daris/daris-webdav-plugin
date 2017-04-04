@@ -48,7 +48,8 @@ public class WebDAVClientImpl extends AbstractWebDAVClient {
             mkcol(parentPath);
         }
         try {
-            System.out.println(Thread.currentThread().getName() + ": MKCOL: " + path);
+            // System.out.println(Thread.currentThread().getName() + ": MKCOL: "
+            // + path);
             execute(true, path, "MKCOL", null, null, 0, null, false, new HttpResponseHandler<Void>() {
 
                 @Override
@@ -67,7 +68,8 @@ public class WebDAVClientImpl extends AbstractWebDAVClient {
                 if (retryInterval() > 0) {
                     Thread.sleep(retryInterval());
                 }
-                System.out.println(Thread.currentThread().getName() + ": MKCOL retries left: " + nbRetries);
+                // System.out.println(Thread.currentThread().getName() + ":
+                // MKCOL retries left: " + nbRetries);
                 mkcol(path, nbRetries - 1);
             } else {
                 throw e;
@@ -84,7 +86,8 @@ public class WebDAVClientImpl extends AbstractWebDAVClient {
         }
         SizedInputStream sin = new SizedInputStream(in, length);
         try {
-            System.out.println(Thread.currentThread().getName() + ": PUT: " + path);
+            // System.out.println(Thread.currentThread().getName() + ": PUT: " +
+            // path);
             execute(true, path, "PUT", headers, sin, length, contentType, false, new HttpResponseHandler<Void>() {
 
                 @Override
@@ -104,7 +107,8 @@ public class WebDAVClientImpl extends AbstractWebDAVClient {
                 if (retryInterval() > 0) {
                     Thread.sleep(retryInterval());
                 }
-                System.out.println(Thread.currentThread().getName() + ": PUT retries left: " + nbRetries);
+                // System.out.println(Thread.currentThread().getName() + ": PUT
+                // retries left: " + nbRetries);
                 put(path, in, length, contentType, headers, nbRetries - 1);
             } else {
                 throw e;
