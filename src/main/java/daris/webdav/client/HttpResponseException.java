@@ -1,4 +1,4 @@
-package daris.webdav.client.xtman;
+package daris.webdav.client;
 
 public class HttpResponseException extends Exception {
 

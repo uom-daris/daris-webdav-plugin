@@ -20,13 +20,7 @@ if { [xvalue exists [plugin.module.exists :path ${plugin_namespace}/${plugin_jar
 }
 
 # install the plugin module
-plugin.module.add :path ${plugin_namespace}/${plugin_jar} :class ${module_class} \
-    :lib lib/jackrabbit-webdav-2.13.1.jar \
-    :lib lib/slf4j-api-1.6.6.jar \
-    :lib lib/slf4j-nop-1.7.21.jar \
-    :lib lib/commons-codec-1.2.jar \
-    :lib lib/commons-httpclient-3.1.jar \
-    :lib lib/jcl-over-slf4j-1.7.4.jar
+plugin.module.add :path ${plugin_namespace}/${plugin_jar} :class ${module_class}
 
 # reload the services     
 system.service.reload

@@ -1,4 +1,4 @@
-package daris.webdav.client.xtman;
+package daris.webdav.client;
 
 import java.io.InputStream;
 import java.util.List;

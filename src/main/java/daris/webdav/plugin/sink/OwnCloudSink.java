@@ -29,16 +29,17 @@ public class OwnCloudSink extends WebDAVSink {
 
     @Override
     protected OwnCloudClient getClient(Map<String, String> params) throws Throwable {
-        OwnCloudClient client = OwnCloudClientFactory.getClient(params.get(PARAM_URL), params.get(PARAM_USERNAME),
-                params.get(PARAM_PASSWORD));
+        String baseUrl = params.get(PARAM_URL);
+        String username = params.get(PARAM_USERNAME);
+        String password = params.get(PARAM_PASSWORD);
+        long chunkSize = OwnCloudClient.DEFAULT_CHUNK_SIZE;
         if (params.containsKey(PARAM_CHUNK_SIZE)) {
-            long chunkSize = 0;
-            String value = params.get(PARAM_CHUNK_SIZE);
-            chunkSize = Long.parseLong(value);
-            if (chunkSize > 0) {
-                client.setChunkSize(chunkSize);
+            chunkSize = Long.parseLong(params.get(PARAM_CHUNK_SIZE));
+            if (chunkSize <= 0) {
+                chunkSize = OwnCloudClient.DEFAULT_CHUNK_SIZE;
             }
         }
+        OwnCloudClient client = OwnCloudClientFactory.create(baseUrl, username, password, chunkSize);
         return client;
     }
 

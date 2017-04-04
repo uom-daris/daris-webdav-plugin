@@ -1,4 +1,4 @@
-package daris.webdav.client.jackrabbit;
+package daris.webdav.client;
 
 import java.io.InputStream;
 import java.util.Map;
@@ -6,24 +6,20 @@ import java.util.Random;
 
 import daris.io.SizedInputStream;
 import daris.util.CollectionUtils;
-import daris.webdav.client.OwnCloudClient;
 
-public class JackRabbitOwnCloudClient extends JackRabbitWebDAVClient implements OwnCloudClient {
+public class OwnCloudClientImpl extends WebDAVClientImpl implements OwnCloudClient {
 
-    public static final String OC_CHUNKED_HEADER = "OC-Chunked";
+    private long _chunkSize;
 
-    private long _chunkSize = 0;
-
-    public JackRabbitOwnCloudClient(String baseUrl, String username, String password) {
-        super(baseUrl, username, password);
+    OwnCloudClientImpl(String baseUrl, String username, String password, int maxNumberOfRetries, int retryInterval,
+            int maxNumberOfConnectionsPerUri, long chunkSize) {
+        super(baseUrl, username, password, maxNumberOfRetries, retryInterval, maxNumberOfConnectionsPerUri);
+        _chunkSize = chunkSize;
     }
 
+    @Override
     public long chunkSize() {
         return _chunkSize;
-    }
-
-    public void setChunkSize(long chunkSize) {
-        _chunkSize = chunkSize;
     }
 
     protected void putChunk(String filePath, InputStream in, long length, int index, int nbChunks) throws Throwable {
@@ -50,4 +46,5 @@ public class JackRabbitOwnCloudClient extends JackRabbitWebDAVClient implements 
             }
         }
     }
+
 }

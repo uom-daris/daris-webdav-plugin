@@ -12,23 +12,26 @@ import daris.util.URLUtils;
 
 public abstract class AbstractWebDAVClient implements WebDAVClient {
 
-    private String _baseUrl;
+    private String _baseUri;
     private String _username;
     private String _password;
-    private int _maxRetries;
+    private int _maxNumberOfRetries;
     private int _retryInterval;
+    private int _maxNumberOfConnectionsPerUri;
 
-    protected AbstractWebDAVClient(String baseUrl, String username, String password) {
-        _baseUrl = baseUrl;
+    protected AbstractWebDAVClient(String baseUri, String username, String password, int maxNumberOfRetries, int retryInterval,
+            int maxNumberOfConnectionsPerUri) {
+        _baseUri = baseUri;
         _username = username;
         _password = password;
-        _maxRetries = DEFAULT_MAX_NUMBER_OF_RETRIES;
-        _retryInterval = DEFAULT_RETRY_INTERVAL;
+        _maxNumberOfRetries = maxNumberOfRetries;
+        _retryInterval = retryInterval;
+        _maxNumberOfConnectionsPerUri = maxNumberOfConnectionsPerUri;
     }
 
     @Override
-    public String baseUrl() {
-        return _baseUrl;
+    public String baseUri() {
+        return _baseUri;
     }
 
     protected String username() {
@@ -46,6 +49,7 @@ public abstract class AbstractWebDAVClient implements WebDAVClient {
 
     protected abstract void mkcol(String path, int nbRetries) throws Throwable;
 
+    @Override
     public void put(String path, File file) throws Throwable {
         InputStream in = new BufferedInputStream(new FileInputStream(file));
         try {
@@ -55,6 +59,7 @@ public abstract class AbstractWebDAVClient implements WebDAVClient {
         }
     }
 
+    @Override
     public void put(String path, InputStream in, long length, String contentType) throws Throwable {
         put(path, in, length, contentType, null);
     }
@@ -73,12 +78,9 @@ public abstract class AbstractWebDAVClient implements WebDAVClient {
      * 
      * @return
      */
+    @Override
     public int maxNumberOfRetries() {
-        return _maxRetries;
-    }
-
-    public void setMaxNumberOfRetries(int maxRetries) {
-        _maxRetries = maxRetries;
+        return _maxNumberOfRetries;
     }
 
     /**
@@ -86,28 +88,30 @@ public abstract class AbstractWebDAVClient implements WebDAVClient {
      * 
      * @return
      */
+    @Override
     public int retryInterval() {
         return _retryInterval;
     }
 
-    public void setRetryInterval(int retryInterval) {
-        _retryInterval = retryInterval;
+    @Override
+    public int maxNumberOfConnectionPerUri() {
+        return _maxNumberOfConnectionsPerUri;
     }
 
-    protected String toUrl(String path) throws Throwable {
-        return toUrl(baseUrl(), path);
+    protected String toUri(String path) throws Throwable {
+        return toUri(baseUri(), path);
     }
 
     protected String serverHost() throws Throwable {
-        return serverHost(baseUrl());
+        return serverHost(baseUri());
     }
 
-    public static String toUrl(String baseUrl, String path) throws Throwable {
-        return PathUtils.join(baseUrl, URLUtils.encode(path));
+    public static String toUri(String baseUri, String path) throws Throwable {
+        return PathUtils.join(baseUri, URLUtils.encode(path));
     }
 
-    public static String serverHost(String baseUrl) throws Throwable {
-        return URI.create(baseUrl).getHost();
+    public static String serverHost(String baseUri) throws Throwable {
+        return URI.create(baseUri).getHost();
     }
 
 }

@@ -1,11 +1,16 @@
 package daris.webdav.client;
 
-import daris.webdav.client.jackrabbit.JackRabbitWebDAVClient;
-
 public class WebDAVClientFactory {
 
-    public static WebDAVClient getClient(String baseUrl, String username, String password) {
-        return new JackRabbitWebDAVClient(baseUrl, username, password);
+    public static WebDAVClient create(String baseUri, String username, String password, int maxNumberOfRetries,
+            int retryInterval, int maxNumberOfConnectionsPerUri) {
+        return new WebDAVClientImpl(baseUri, username, password, maxNumberOfRetries, retryInterval,
+                maxNumberOfConnectionsPerUri);
+    }
+    
+    public static WebDAVClient create(String baseUri, String username, String password) {
+        return create(baseUri, username, password, WebDAVClient.DEFAULT_MAX_NUMBER_OF_RETRIES, WebDAVClient.DEFAULT_RETRY_INTERVAL,
+                WebDAVClient.DEFAULT_MAX_NUMBER_OF_CONNECTIONS_PER_URI);
     }
 
 }

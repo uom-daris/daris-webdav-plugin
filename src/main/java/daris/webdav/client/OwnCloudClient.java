@@ -7,7 +7,5 @@ public interface OwnCloudClient extends WebDAVClient {
     public static final int DEFAULT_CHUNK_SIZE = 0;
 
     long chunkSize();
-    
-    void setChunkSize(long chunkSize);
 
 }
