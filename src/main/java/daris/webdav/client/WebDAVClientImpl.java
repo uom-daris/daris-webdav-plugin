@@ -86,8 +86,9 @@ public class WebDAVClientImpl extends AbstractWebDAVClient {
         }
         SizedInputStream sin = new SizedInputStream(in, length);
         try {
-            // System.out.println(Thread.currentThread().getName() + ": PUT: " +
-            // path);
+            // @formatter:off
+            // System.out.println(Thread.currentThread().getName() + ": PUT: " + path);
+            // @formatter:on
             execute(true, path, "PUT", headers, sin, length, contentType, false, new HttpResponseHandler<Void>() {
 
                 @Override
@@ -107,8 +108,9 @@ public class WebDAVClientImpl extends AbstractWebDAVClient {
                 if (retryInterval() > 0) {
                     Thread.sleep(retryInterval());
                 }
-                // System.out.println(Thread.currentThread().getName() + ": PUT
-                // retries left: " + nbRetries);
+                // @formatter:off
+                // System.out.println(Thread.currentThread().getName() + ": PUT retries left: " + nbRetries);
+                // @formatter:on
                 put(path, in, length, contentType, headers, nbRetries - 1);
             } else {
                 throw e;
