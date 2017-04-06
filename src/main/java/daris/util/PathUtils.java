@@ -28,7 +28,8 @@ public class PathUtils {
             if (i == 0) {
                 sb.append(trimTrailingSlash(paths[i]));
             } else {
-                sb.append("/").append(trimSlash(paths[i]));
+                sb.append("/");
+                sb.append(trimSlash(paths[i]));
             }
         }
         return sb.toString();

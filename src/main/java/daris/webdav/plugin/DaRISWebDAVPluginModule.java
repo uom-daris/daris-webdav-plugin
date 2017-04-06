@@ -8,6 +8,7 @@ import arc.mf.plugin.ConfigurationResolver;
 import arc.mf.plugin.DataSinkRegistry;
 import arc.mf.plugin.PluginModule;
 import arc.mf.plugin.PluginService;
+import daris.webdav.plugin.services.SvcWebDAVPut;
 import daris.webdav.plugin.sink.OwnCloudSink;
 import daris.webdav.plugin.sink.WebDAVSink;
 
@@ -20,7 +21,7 @@ public class DaRISWebDAVPluginModule implements PluginModule {
 
     public DaRISWebDAVPluginModule() {
         _services = new ArrayList<PluginService>();
-        // Add services here if any.
+        _services.add(new SvcWebDAVPut());
     }
 
     public String description() {
