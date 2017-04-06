@@ -19,6 +19,7 @@
 		<maven.compiler.source>1.7</maven.compiler.source>
 		<maven.compiler.target>1.7</maven.compiler.target>
 		<maven.build.timestamp.format>dd-MMM-yyyy HH:mm:ss z</maven.build.timestamp.format>
+		<maven.test.skip>true</maven.test.skip>
 		<require.mflux.version>4.4.011</require.mflux.version>
 	</properties>
 	<!-- DaRIS maven repository on github.com -->
