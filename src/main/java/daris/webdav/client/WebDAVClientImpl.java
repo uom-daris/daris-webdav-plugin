@@ -64,7 +64,7 @@ public class WebDAVClientImpl extends AbstractWebDAVClient {
                 }
             });
         } catch (HttpResponseException e) {
-            if (nbRetries > 0) {
+            if (!e.isUnauthorized() && nbRetries > 0) {
                 if (retryInterval() > 0) {
                     Thread.sleep(retryInterval());
                 }
@@ -104,7 +104,7 @@ public class WebDAVClientImpl extends AbstractWebDAVClient {
                 }
             });
         } catch (HttpResponseException e) {
-            if (sin.bytesRead() == 0 || nbRetries > 0) {
+            if (!e.isUnauthorized() && sin.bytesRead() == 0 && nbRetries > 0) {
                 if (retryInterval() > 0) {
                     Thread.sleep(retryInterval());
                 }
