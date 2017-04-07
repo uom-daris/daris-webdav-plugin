@@ -1,6 +1,7 @@
 package daris.webdav.plugin.services;
 
 import arc.mf.plugin.PluginService;
+import arc.mf.plugin.dtype.PasswordType;
 import arc.mf.plugin.dtype.StringType;
 import arc.mf.plugin.dtype.UrlType;
 import arc.xml.XmlDoc.Element;
@@ -16,7 +17,7 @@ public abstract class AbstractWebDAVPluginService extends PluginService {
         defn = new Interface();
         defn.add(new Interface.Element("url", UrlType.DEFAULT, "The WebDAV server url.", 1, 1));
         defn.add(new Interface.Element("username", StringType.DEFAULT, "The WebDAV username.", 1, 1));
-        defn.add(new Interface.Element("password", StringType.DEFAULT, "The WebDAV password.", 1, 1));
+        defn.add(new Interface.Element("password", PasswordType.DEFAULT, "The WebDAV password.", 1, 1));
     }
 
     @Override
