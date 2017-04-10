@@ -17,7 +17,7 @@ import java.util.Random;
 public class TestUtils {
 
     public static final String TEST_PROPERTIES_FILE = System.getProperty("user.home")
-            + "/.daris-webdav-plugin-test.properties";
+            + "/.junit-tests/.daris-webdav-plugin-test.properties";
 
     static Map<String, String> getTestSettings() throws Throwable {
         Map<String, String> settings = new HashMap<String, String>();
