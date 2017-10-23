@@ -1,4 +1,4 @@
-package daris.util;
+package io.github.xtman.util;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

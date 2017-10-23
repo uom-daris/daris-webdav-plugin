@@ -7,8 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import daris.io.SizedInputStream;
-import daris.util.PathUtils;
+import io.github.xtman.io.util.SizedInputStream;
+import io.github.xtman.util.PathUtils;
 
 public class WebDAVClientImpl extends AbstractWebDAVClient {
 
@@ -134,7 +134,7 @@ public class WebDAVClientImpl extends AbstractWebDAVClient {
             if (lock && maxNumberOfConnectionPerUri() > 0) {
                 synchronized (_uriCxns) {
                     int nbCxns = _uriCxns.containsKey(requestUri) ? _uriCxns.get(requestUri) : 0;
-                    if (nbCxns >= maxNumberOfConnectionPerUri()) {
+                    while (nbCxns >= maxNumberOfConnectionPerUri()) {
                         _uriCxns.wait();
                     }
                     _uriCxns.put(requestUri, _uriCxns.containsKey(requestUri) ? (_uriCxns.get(requestUri) + 1) : 1);

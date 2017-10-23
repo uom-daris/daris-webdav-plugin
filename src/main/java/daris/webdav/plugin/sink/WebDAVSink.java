@@ -8,14 +8,15 @@ import arc.mf.plugin.dtype.BooleanType;
 import arc.mf.plugin.dtype.PasswordType;
 import arc.mf.plugin.dtype.StringType;
 import arc.mf.plugin.dtype.UrlType;
+import arc.mf.plugin.sink.ParameterDefinition;
 import arc.mime.NamedMimeType;
 import arc.streams.LongInputStream;
 import arc.xml.XmlDoc.Element;
 import daris.plugin.sink.AbstractDataSink;
 import daris.plugin.sink.util.OutputPath;
-import daris.util.PathUtils;
 import daris.webdav.client.WebDAVClient;
 import daris.webdav.client.WebDAVClientFactory;
+import io.github.xtman.util.PathUtils;
 
 public class WebDAVSink extends AbstractDataSink {
 
@@ -29,16 +30,6 @@ public class WebDAVSink extends AbstractDataSink {
 
     protected WebDAVSink(String typeName) throws Throwable {
         super(typeName);
-
-        /*
-         * init param definitions
-         */
-        addParameterDefinition(PARAM_URL, UrlType.DEFAULT, "WebDAV server URL.");
-        addParameterDefinition(PARAM_USERNAME, StringType.DEFAULT, "WebDAV username.");
-        addParameterDefinition(PARAM_PASSWORD, PasswordType.DEFAULT, "WebDAV password.");
-        addParameterDefinition(PARAM_DIRECTORY, StringType.DEFAULT,
-                "The default WebDAV directory(collection). If not specified, defaults to root /.");
-        addParameterDefinition(PARAM_UNARCHIVE, BooleanType.DEFAULT, "Extract archive contents. Defaults to false.");
     }
 
     public WebDAVSink() throws Throwable {
@@ -69,14 +60,7 @@ public class WebDAVSink extends AbstractDataSink {
         }
         String directory = params.get(PARAM_DIRECTORY);
         String assetSpecificOutputPath = multiTransferContext != null ? null : getAssetSpecificOutput(params);
-        boolean unarchive = false;
-        if (params.containsKey(PARAM_UNARCHIVE)) {
-            try {
-                unarchive = Boolean.parseBoolean(params.get(PARAM_UNARCHIVE));
-            } catch (Throwable e) {
-                unarchive = false;
-            }
-        }
+        boolean unarchive = Boolean.parseBoolean(params.getOrDefault(PARAM_UNARCHIVE, "false"));
         String mimeType = streamMimeType;
         if (mimeType == null && assetMeta != null) {
             mimeType = assetMeta.value("content/type");
@@ -91,15 +75,19 @@ public class WebDAVSink extends AbstractDataSink {
             ArchiveInput.Entry entry;
             try {
                 while ((entry = ai.next()) != null) {
-                    if (entry.isDirectory()) {
-                        client.mkcol(PathUtils.join(remoteDirPath, entry.name()));
-                    } else {
-                        try {
-                            client.put(PathUtils.join(remoteDirPath, entry.name()), entry.stream(), entry.size(),
-                                    entry.mimeType());
-                        } finally {
-                            entry.stream().close();
+                    try {
+                        if (entry.isDirectory()) {
+                            client.mkcol(PathUtils.join(remoteDirPath, entry.name()));
+                        } else {
+                            try {
+                                client.put(PathUtils.join(remoteDirPath, entry.name()), entry.stream(), entry.size(),
+                                        entry.mimeType());
+                            } finally {
+                                entry.stream().close();
+                            }
                         }
+                    } finally {
+                        ai.closeEntry();
                     }
                 }
             } finally {
@@ -149,6 +137,35 @@ public class WebDAVSink extends AbstractDataSink {
         } else {
             return getClient(params);
         }
+    }
+
+    @Override
+    protected void addParameterDefinitions(Map<String, ParameterDefinition> paramDefns) throws Throwable {
+        /*
+         * init param definitions
+         */
+        // @formatter:off
+        
+        // {{                 --- start
+        // }}                 --- end
+        // default=DEFAULT    --- default value
+        // admin              --- for admin only, should not be presented to end user
+        // text               --- multiple lines text
+        // optional           --- optional
+        // xor=PARAM1|PARAM2  --- 
+        // mutable            --- 
+        // pattern=PATTERN    --- regex pattern to validate string value
+        // enum=VALUE1|VALUE2 --- enumerated values
+        
+        // @formatter:on
+        addParameterDefinition(paramDefns, PARAM_URL, UrlType.DEFAULT, "WebDAV server URL.", false);
+        addParameterDefinition(paramDefns, PARAM_USERNAME, StringType.DEFAULT, "WebDAV username.", false);
+        addParameterDefinition(paramDefns, PARAM_PASSWORD, PasswordType.DEFAULT, "WebDAV password.", false);
+        addParameterDefinition(paramDefns, PARAM_DIRECTORY, StringType.DEFAULT,
+                "The default WebDAV directory(collection). If not specified, defaults to root /.{{optional,mutable}}",
+                false);
+        addParameterDefinition(paramDefns, PARAM_UNARCHIVE, BooleanType.DEFAULT,
+                "Extract archive contents. Defaults to false.{{optional,mutable,default=false}}", false);
     }
 
 }

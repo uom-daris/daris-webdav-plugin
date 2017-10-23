@@ -3,6 +3,7 @@ package daris.webdav.plugin.sink;
 import java.util.Map;
 
 import arc.mf.plugin.dtype.LongType;
+import arc.mf.plugin.sink.ParameterDefinition;
 import daris.webdav.client.OwnCloudClient;
 import daris.webdav.client.OwnCloudClientFactory;
 
@@ -23,8 +24,13 @@ public class OwnCloudSink extends WebDAVSink {
 
     public OwnCloudSink() throws Throwable {
         super(TYPE_NAME);
-        addParameterDefinition(PARAM_CHUNK_SIZE, LongType.POSITIVE,
-                "Chunk size for chunked upload. Defaults to 0, which disables chunking.");
+    }
+
+    @Override
+    protected void addParameterDefinitions(Map<String, ParameterDefinition> paramDefns) throws Throwable {
+        super.addParameterDefinitions(paramDefns);
+        addParameterDefinition(paramDefns, PARAM_CHUNK_SIZE, LongType.POSITIVE,
+                "Chunk size for chunked upload. Defaults to 0, which disables chunking.{{admin,default=0}}", false);
     }
 
     @Override

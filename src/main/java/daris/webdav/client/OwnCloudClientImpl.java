@@ -4,8 +4,8 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.Random;
 
-import daris.io.SizedInputStream;
-import daris.util.CollectionUtils;
+import io.github.xtman.io.util.SizedInputStream;
+import io.github.xtman.util.CollectionUtils;
 
 public class OwnCloudClientImpl extends WebDAVClientImpl implements OwnCloudClient {
 

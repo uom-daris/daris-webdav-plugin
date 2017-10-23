@@ -1,4 +1,4 @@
-package daris.util;
+package io.github.xtman.util;
 
 import java.net.URI;
 import java.net.URL;
@@ -20,8 +20,8 @@ public class URLUtils {
         }
     }
 
-    public static void main(String[] args) throws Throwable {
-        System.out.println(encode("/ttt9/www/Arcitecta Dots Grey.png"));
-    }
+//    public static void main(String[] args) throws Throwable {
+//        System.out.println(encode("/ttt9/www/Arcitecta Dots Grey.png"));
+//    }
 
 }

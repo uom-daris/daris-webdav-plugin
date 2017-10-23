@@ -1,4 +1,4 @@
-package daris.util;
+package io.github.xtman.util;
 
 public interface AbortCheck {
 

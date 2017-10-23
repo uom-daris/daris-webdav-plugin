@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import daris.io.StreamUtils;
+import io.github.xtman.io.util.StreamUtils;
 
 public abstract class HttpClientBase implements HttpClient {
 

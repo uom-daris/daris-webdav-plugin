@@ -22,8 +22,8 @@ import arc.xml.XmlDoc.Element;
 import arc.xml.XmlDocMaker;
 import arc.xml.XmlWriter;
 import daris.plugin.sink.util.OutputPath;
-import daris.util.PathUtils;
 import daris.webdav.client.WebDAVClient;
+import io.github.xtman.util.PathUtils;
 
 public class SvcWebDAVPut extends AbstractWebDAVPluginService {
 

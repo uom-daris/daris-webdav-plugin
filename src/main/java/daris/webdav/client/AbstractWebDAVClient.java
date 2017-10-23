@@ -7,8 +7,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Map;
 
-import daris.util.PathUtils;
-import daris.util.URLUtils;
+import io.github.xtman.util.PathUtils;
+import io.github.xtman.util.URLUtils;
 
 public abstract class AbstractWebDAVClient implements WebDAVClient {
 
